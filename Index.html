@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Schmiede-Log</title>
+<meta name="theme-color" content="#14171b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Schmiede-Log">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%2314171b'/%3E%3Cpath d='M90 30 C 65 65, 55 85, 65 110 C 70 122, 82 130, 90 130 C 98 130, 110 122, 115 110 C 125 85, 115 65, 90 30 Z' fill='%23e8873a'/%3E%3Cpath d='M90 65 C 78 85, 74 96, 80 108 C 83 114, 87 118, 90 118 C 93 118, 97 114, 100 108 C 106 96, 102 85, 90 65 Z' fill='%23d8a24a'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%2314171b'/%3E%3Cpath d='M90 30 C 65 65, 55 85, 65 110 C 70 122, 82 130, 90 130 C 98 130, 110 122, 115 110 C 125 85, 115 65, 90 30 Z' fill='%23e8873a'/%3E%3C/svg%3E">
+<style>
+  :root{
+    --iron: #14171b;
+    --iron-panel: #1c2027;
+    --iron-panel-2: #232830;
+    --ember: #e8873a;
+    --ember-dim: #a85f28;
+    --steel: #7f97a6;
+    --gold: #d8a24a;
+    --text: #ece7dd;
+    --text-dim: #9aa0a8;
+    --line: #33383f;
+    --danger: #b4573f;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: var(--iron);
+    color: var(--text);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    line-height:1.5;
+    padding: calc(28px + env(safe-area-inset-top)) 18px calc(60px + env(safe-area-inset-bottom));
+    min-height:100vh;
+  }
+  .wrap{max-width:640px; margin:0 auto;}
+
+  h1,h2,.slab{
+    font-family: 'Zilla Slab', Georgia, serif;
+  }
+
+  header.top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    border-bottom: 2px solid var(--line);
+    padding-bottom: 18px;
+    margin-bottom: 26px;
+  }
+  header.top .title{
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    margin:0;
+  }
+  header.top .subtitle{
+    color: var(--text-dim);
+    font-size: 13px;
+    margin-top: 4px;
+  }
+
+  .level-plate{
+    position:relative;
+    text-align:right;
+  }
+  .level-plate .num{
+    font-family:'Zilla Slab', serif;
+    font-size: 52px;
+    font-weight: 700;
+    color: var(--ember);
+    text-shadow: 0 0 18px rgba(232,135,58,0.35);
+    line-height:1;
+  }
+  .level-plate .label{
+    font-size:11px;
+    color: var(--text-dim);
+    margin-top:2px;
+  }
+
+  .xp-total-bar{
+    height: 10px;
+    background: var(--iron-panel-2);
+    border: 1px solid var(--line);
+    margin-bottom: 34px;
+    position:relative;
+    overflow:hidden;
+  }
+  .xp-total-bar .fill{
+    height:100%;
+    background: linear-gradient(90deg, var(--ember-dim), var(--ember));
+    width:0%;
+    transition: width 0.6s ease;
+  }
+  .xp-total-caption{
+    display:flex;
+    justify-content:space-between;
+    font-size:12px;
+    color:var(--text-dim);
+    margin-top:6px;
+    margin-bottom:30px;
+    font-family: 'Courier New', monospace;
+  }
+
+  section{margin-bottom: 34px;}
+  section > h2{
+    font-size:15px;
+    font-weight:600;
+    color: var(--text);
+    margin: 0 0 14px 0;
+    padding-bottom:8px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .stat-row{
+    display:grid;
+    grid-template-columns: 110px 1fr 46px;
+    align-items:center;
+    gap:12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .stat-row:last-child{border-bottom:none;}
+  .stat-name{font-size:14px;}
+  .stat-name .stat-level{
+    display:block;
+    font-size:11px;
+    color: var(--steel);
+    font-family:'Courier New', monospace;
+    margin-top:2px;
+  }
+  .bar-track{
+    height: 8px;
+    background: var(--iron-panel-2);
+    border:1px solid var(--line);
+    overflow:hidden;
+  }
+  .bar-fill{
+    height:100%;
+    background: var(--steel);
+    width:0%;
+    transition: width 0.5s ease;
+  }
+  .stat-xp{
+    text-align:right;
+    font-family:'Courier New', monospace;
+    font-size:12px;
+    color: var(--text-dim);
+  }
+
+  .streak-panel{
+    display:flex;
+    gap: 20px;
+    padding: 16px 0;
+  }
+  .streak-block{flex:1; text-align:center; border-right:1px solid var(--line);}
+  .streak-block:last-child{border-right:none;}
+  .streak-block .num{
+    font-family:'Zilla Slab', serif;
+    font-size:26px;
+    color: var(--gold);
+  }
+  .streak-block .label{font-size:11px; color:var(--text-dim); margin-top:2px;}
+  .streak-msg{
+    font-size:13px;
+    color: var(--text-dim);
+    text-align:center;
+    padding-top: 6px;
+    border-top: 1px dashed var(--line);
+  }
+
+  .add-form{
+    background: var(--iron-panel);
+    border: 1px solid var(--line);
+    padding: 16px;
+  }
+  .add-form label{
+    display:block;
+    font-size:12px;
+    color: var(--text-dim);
+    margin-bottom:6px;
+  }
+  select, input[type=text]{
+    width:100%;
+    background: var(--iron-panel-2);
+    border: 1px solid var(--line);
+    color: var(--text);
+    padding: 9px 10px;
+    font-size:14px;
+    font-family: inherit;
+    margin-bottom: 12px;
+  }
+  select:focus, input:focus, button:focus{
+    outline: 2px solid var(--ember);
+    outline-offset: 1px;
+  }
+  .xp-choice-row{
+    display:flex;
+    gap:8px;
+    margin-bottom: 14px;
+  }
+  .xp-choice{
+    flex:1;
+    background: var(--iron-panel-2);
+    border:1px solid var(--line);
+    color: var(--text-dim);
+    padding: 10px 6px;
+    font-size:12px;
+    cursor:pointer;
+    text-align:center;
+  }
+  .xp-choice.selected{
+    border-color: var(--ember);
+    color: var(--ember);
+    background: rgba(232,135,58,0.08);
+  }
+  button.submit{
+    width:100%;
+    background: var(--ember);
+    color: var(--iron);
+    border:none;
+    padding: 12px;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    letter-spacing: 0.2px;
+  }
+  button.submit:hover{background: #f0994f;}
+  button.submit:disabled{background:var(--ember-dim); cursor:not-allowed;}
+
+  .log-list{list-style:none; margin:0; padding:0;}
+  .log-list li{
+    display:flex;
+    justify-content:space-between;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+    font-size:13px;
+  }
+  .log-list li:last-child{border-bottom:none;}
+  .log-cat{color: var(--steel); font-size:11px; text-transform:none;}
+  .log-note{color: var(--text-dim); font-size:12px; margin-top:2px;}
+  .log-xp{
+    font-family:'Courier New', monospace;
+    color: var(--gold);
+    white-space:nowrap;
+  }
+  .empty{color:var(--text-dim); font-size:13px; padding: 8px 0;}
+
+  .toast{
+    position:fixed;
+    bottom: 20px;
+    left:50%;
+    transform: translateX(-50%);
+    background: var(--iron-panel);
+    border:1px solid var(--ember);
+    color: var(--text);
+    padding: 10px 18px;
+    font-size:13px;
+    opacity:0;
+    transition: opacity 0.3s ease;
+    pointer-events:none;
+  }
+  .toast.show{opacity:1;}
+
+  .challenge-box{
+    background: var(--iron-panel);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--ember);
+    padding: 16px;
+  }
+  .challenge-box .challenge-cat{
+    font-size:11px;
+    color: var(--steel);
+    margin-bottom:6px;
+  }
+  .challenge-box .challenge-text{
+    font-size:15px;
+    margin-bottom: 14px;
+  }
+  .challenge-actions{display:flex; gap:8px;}
+  button.ghost{
+    flex:1;
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--text-dim);
+    padding: 10px;
+    font-size:13px;
+    cursor:pointer;
+  }
+  button.ghost.primary{
+    border-color: var(--ember);
+    color: var(--ember);
+  }
+  .challenge-empty{
+    color: var(--text-dim);
+    font-size:13px;
+  }
+
+  .quest-card{
+    background: var(--iron-panel);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--steel);
+    padding: 14px;
+    margin-bottom: 10px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap: 12px;
+  }
+  .quest-card.comfort{border-left-color: var(--ember);}
+  .quest-card.done{
+    opacity: 0.5;
+    border-left-color: var(--gold);
+  }
+  .quest-info .quest-cat{
+    font-size:11px;
+    color: var(--steel);
+    margin-bottom:4px;
+  }
+  .quest-card.comfort .quest-info .quest-cat{color: var(--ember);}
+  .quest-info .quest-text{font-size:14px;}
+  .quest-info .quest-xp{
+    font-family:'Courier New', monospace;
+    font-size:11px;
+    color: var(--text-dim);
+    margin-top:4px;
+  }
+  button.quest-done-btn{
+    background: var(--iron-panel-2);
+    border:1px solid var(--line);
+    color: var(--text);
+    padding: 8px 12px;
+    font-size:12px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  button.quest-done-btn:disabled{
+    background: transparent;
+    color: var(--gold);
+    border-color: var(--gold);
+    cursor:default;
+  }
+
+  .comfort-toggle{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background: var(--iron-panel-2);
+    border: 1px solid var(--line);
+    padding: 10px 12px;
+    margin-bottom: 14px;
+    cursor:pointer;
+  }
+  .comfort-toggle input{
+    width:16px;
+    height:16px;
+    accent-color: var(--ember);
+  }
+  .comfort-toggle span{font-size:13px; color: var(--text-dim);}
+  .comfort-toggle.active span{color: var(--ember);}
+
+  .mut-panel{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding: 4px 0 10px;
+  }
+  .mut-panel .mut-num{
+    font-family:'Zilla Slab', serif;
+    font-size:22px;
+    color: var(--ember);
+  }
+  .mut-panel .mut-label{font-size:11px; color:var(--text-dim);}
+  .log-comfort-tag{
+    color: var(--ember);
+    font-size:11px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div>
+      <p class="title">Schmiede-Log</p>
+      <p class="subtitle">Altes brechen. Neues schmieden.</p>
+    </div>
+    <div class="level-plate">
+      <div class="num" id="levelNum">1</div>
+      <div class="label">GESAMTLEVEL</div>
+    </div>
+  </header>
+
+  <div class="xp-total-bar"><div class="fill" id="totalFill"></div></div>
+  <div class="xp-total-caption">
+    <span id="totalXpLabel">0 XP gesamt</span>
+    <span id="nextLevelLabel">bis Level 2: 0 XP</span>
+  </div>
+
+  <section>
+    <h2>Fortschritt nach Bereich</h2>
+    <div id="statRows"></div>
+  </section>
+
+  <section>
+    <h2>Serie</h2>
+    <div class="streak-panel">
+      <div class="streak-block">
+        <div class="num" id="currentStreak">0</div>
+        <div class="label">Tage in Folge</div>
+      </div>
+      <div class="streak-block">
+        <div class="num" id="bestStreak">0</div>
+        <div class="label">Beste Serie</div>
+      </div>
+      <div class="streak-block">
+        <div class="num" id="totalEntries">0</div>
+        <div class="label">Einträge gesamt</div>
+      </div>
+    </div>
+    <div class="streak-msg" id="streakMsg">Trag deinen ersten Fortschritt ein.</div>
+  </section>
+
+  <section>
+    <h2>Mut-Punkte</h2>
+    <div class="mut-panel">
+      <div>
+        <div class="mut-num" id="mutXpNum">0 Mut-Punkte</div>
+        <div class="mut-label">Nur für Aufgaben außerhalb deiner Komfortzone</div>
+      </div>
+      <div style="text-align:right">
+        <div class="mut-num" id="mutLevelNum">Level 1</div>
+        <div class="mut-label">Mut-Level</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Tagesquests</h2>
+    <div id="questList"></div>
+    <div class="mut-label" style="margin-top:8px;">Wechseln automatisch jeden Tag – niemand trägt sie selbst ein.</div>
+  </section>
+
+  <section>
+    <h2>Fortschritt eintragen</h2>
+    <div class="add-form">
+      <label for="catSelect">Bereich</label>
+      <select id="catSelect">
+        <option value="gewohnheiten">Gewohnheiten &amp; Routinen</option>
+        <option value="fitness">Gesundheit &amp; Fitness</option>
+        <option value="karriere">Beruf &amp; Produktivität</option>
+        <option value="beziehungen">Beziehungen &amp; Soziales</option>
+      </select>
+
+      <label>Größe des Erfolgs</label>
+      <div class="xp-choice-row">
+        <div class="xp-choice" data-xp="10">Klein · 10 XP</div>
+        <div class="xp-choice" data-xp="25">Mittel · 25 XP</div>
+        <div class="xp-choice" data-xp="50">Groß · 50 XP</div>
+      </div>
+
+      <div class="comfort-toggle" id="comfortToggle">
+        <input type="checkbox" id="comfortCheckbox">
+        <span>Das war außerhalb meiner Komfortzone (2× XP + Mut-Punkte)</span>
+      </div>
+
+      <label for="noteInput">Notiz (optional)</label>
+      <input type="text" id="noteInput" placeholder="z.B. Abendroutine gemacht" maxlength="80">
+
+      <button class="submit" id="submitBtn" disabled>Eintragen</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>Verlauf</h2>
+    <ul class="log-list" id="logList"></ul>
+  </section>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const CATS = {
+  gewohnheiten: "Gewohnheiten & Routinen",
+  fitness: "Gesundheit & Fitness",
+  karriere: "Beruf & Produktivität",
+  beziehungen: "Beziehungen & Soziales"
+};
+
+const CHALLENGES = {
+  gewohnheiten: [
+    "Steh heute 15 Minuten früher auf als sonst.",
+    "Erledige heute die eine Sache, die du seit Wochen vor dir herschiebst.",
+    "Verzichte einen ganzen Tag auf Social Media.",
+    "Leg dir heute Abend schon alles für morgen früh bereit.",
+    "Räum heute 10 Minuten etwas auf, das dich seit Langem stört."
+  ],
+  fitness: [
+    "Geh eine Strecke, die du noch nie gelaufen bist.",
+    "Trainiere heute 5 Minuten länger, als du eigentlich vorhattest.",
+    "Probier eine Übung aus, die du bisher gemieden hast.",
+    "Sprich im Park oder Fitnessstudio kurz jemanden an.",
+    "Tausch heute Abend gegen einen Morgen-Sport, wenn irgend möglich."
+  ],
+  karriere: [
+    "Sprich heute ein Thema an, das du bisher vermieden hast.",
+    "Frag aktiv jemanden nach ehrlichem Feedback zu deiner Arbeit.",
+    "Stell in einem Gespräch eine Frage, obwohl du dich unsicher fühlst.",
+    "Sag bei einer Sache bewusst 'Nein', wenn sie dir eigentlich zu viel ist.",
+    "Biete an, eine Aufgabe zu übernehmen, vor der du sonst zurückschreckst."
+  ],
+  beziehungen: [
+    "Ruf jemanden an, statt zu schreiben.",
+    "Sag einer Person ehrlich, was du an ihr schätzt.",
+    "Sprich ein Missverständnis aktiv an, statt es zu ignorieren.",
+    "Meld dich bei jemandem, den du lange nicht gesprochen hast.",
+    "Sag offen deine Meinung, auch wenn sie unbequem sein könnte."
+  ]
+};
+
+const QUEST_POOL = {
+  gewohnheiten: [
+    { text: "Bett direkt nach dem Aufstehen machen.", xp: 10, comfort: false },
+    { text: "Die erste halbe Stunde nach dem Aufstehen ohne Handy.", xp: 10, comfort: false },
+    { text: "Sportsachen oder Kleidung für morgen schon heute bereitlegen.", xp: 10, comfort: false },
+    { text: "5-Minuten Abend-Reset: kurz aufräumen, Tasche packen.", xp: 10, comfort: false },
+    { text: "Einen ganzen Tag ohne Social Media.", xp: 25, comfort: true },
+    { text: "15 Minuten früher aufstehen als sonst.", xp: 25, comfort: true },
+    { text: "Die Aufgabe erledigen, die du seit Wochen vor dir herschiebst.", xp: 50, comfort: true },
+    { text: "10 Minuten früher als sonst ins Bett gehen.", xp: 10, comfort: false }
+  ],
+  fitness: [
+    { text: "10 Minuten spazieren gehen.", xp: 10, comfort: false },
+    { text: "10 Kniebeugen + 10 Liegestütze machen.", xp: 10, comfort: false },
+    { text: "5 Minuten dehnen vor dem Schlafen.", xp: 10, comfort: false },
+    { text: "Treppe statt Aufzug nehmen, wo es geht.", xp: 10, comfort: false },
+    { text: "Eine neue Strecke laufen oder gehen, die du noch nicht kennst.", xp: 25, comfort: true },
+    { text: "5 Minuten länger trainieren, als du eigentlich vorhattest.", xp: 25, comfort: true },
+    { text: "Eine Übung ausprobieren, die du bisher gemieden hast.", xp: 25, comfort: true },
+    { text: "Ersten Testlauf zum Calisthenics-Park machen.", xp: 50, comfort: true }
+  ],
+  karriere: [
+    { text: "To-do-Liste für morgen schreiben.", xp: 10, comfort: false },
+    { text: "15 Minuten fokussiert an einer Sache arbeiten, ohne Handy.", xp: 10, comfort: false },
+    { text: "Posteingang oder Nachrichten aufräumen.", xp: 10, comfort: false },
+    { text: "Eine nervige Sache vereinfachen oder automatisieren.", xp: 25, comfort: false },
+    { text: "Aktiv um Feedback zu deiner Arbeit bitten.", xp: 25, comfort: true },
+    { text: "Ein Thema ansprechen, das du bisher vermieden hast.", xp: 50, comfort: true },
+    { text: "In einem Gespräch eine Frage stellen, obwohl du unsicher bist.", xp: 25, comfort: true },
+    { text: "Bewusst 'Nein' sagen, wenn dir etwas zu viel wird.", xp: 25, comfort: true }
+  ],
+  beziehungen: [
+    { text: "Jemandem eine nette Nachricht schreiben.", xp: 10, comfort: false },
+    { text: "Jemandem aktiv zuhören, ohne aufs Handy zu schauen.", xp: 10, comfort: false },
+    { text: "Jemandem für etwas danken.", xp: 10, comfort: false },
+    { text: "Ein kurzes Gespräch mit einer fremden Person führen.", xp: 25, comfort: true },
+    { text: "Jemanden anrufen, statt zu schreiben.", xp: 25, comfort: true },
+    { text: "Ein Missverständnis aktiv ansprechen.", xp: 50, comfort: true },
+    { text: "Dich mit jemandem verabreden, den du lange nicht gesehen hast.", xp: 25, comfort: true },
+    { text: "Offen deine Meinung sagen, auch wenn sie unbequem ist.", xp: 50, comfort: true }
+  ]
+};
+
+function hashStr(str){
+  let hash = 5381;
+  for(let i = 0; i < str.length; i++){
+    hash = ((hash << 5) + hash) + str.charCodeAt(i);
+    hash = hash & hash;
+  }
+  return Math.abs(hash);
+}
+
+function getTodaysQuest(cat, dateStr){
+  const pool = QUEST_POOL[cat];
+  const idx = hashStr(dateStr + "-" + cat) % pool.length;
+  return pool[idx];
+}
+
+const STORAGE_KEY = "schmiede-log-state";
+
+let state = {
+  categories: {
+    gewohnheiten: { xp: 0 },
+    fitness: { xp: 0 },
+    karriere: { xp: 0 },
+    beziehungen: { xp: 0 }
+  },
+  mutXp: 0,
+  log: [],
+  currentStreak: 0,
+  bestStreak: 0,
+  lastEntryDate: null,
+  dailyQuests: { date: null, completed: {} }
+};
+
+let selectedXp = null;
+
+function levelFromXp(xp){
+  return Math.floor(Math.sqrt(xp / 40)) + 1;
+}
+function xpForLevel(level){
+  return Math.pow(level - 1, 2) * 40;
+}
+
+function dateOnly(d){
+  const dt = new Date(d);
+  return dt.getFullYear() + "-" + (dt.getMonth()+1) + "-" + dt.getDate();
+}
+function daysBetween(a, b){
+  const d1 = new Date(a);
+  const d2 = new Date(b);
+  return Math.round((d2 - d1) / 86400000);
+}
+
+async function loadState(){
+  try{
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if(saved){
+      const parsed = JSON.parse(saved);
+      state = Object.assign(state, parsed);
+    }
+  }catch(e){
+    console.log("Kein gespeicherter Stand gefunden, starte neu.");
+  }
+  render();
+}
+
+async function saveState(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }catch(e){
+    console.error("Speichern fehlgeschlagen", e);
+    showToast("Speichern fehlgeschlagen");
+  }
+}
+
+function totalXp(){
+  return Object.values(state.categories).reduce((sum, c) => sum + c.xp, 0);
+}
+
+function render(){
+  const todayStr = dateOnly(new Date());
+  if(state.dailyQuests.date !== todayStr){
+    state.dailyQuests = { date: todayStr, completed: {} };
+  }
+
+  const total = totalXp();
+  const level = levelFromXp(total);
+  const currentLevelBase = xpForLevel(level);
+  const nextLevelBase = xpForLevel(level + 1);
+  const progress = (total - currentLevelBase) / (nextLevelBase - currentLevelBase);
+
+  document.getElementById("levelNum").textContent = level;
+  document.getElementById("totalFill").style.width = Math.min(100, progress * 100) + "%";
+  document.getElementById("totalXpLabel").textContent = total + " XP gesamt";
+  document.getElementById("nextLevelLabel").textContent =
+    "bis Level " + (level + 1) + ": " + (nextLevelBase - total) + " XP";
+
+  const rowsEl = document.getElementById("statRows");
+  rowsEl.innerHTML = "";
+  Object.keys(CATS).forEach(key => {
+    const catXp = state.categories[key].xp;
+    const catLevel = levelFromXp(catXp);
+    const base = xpForLevel(catLevel);
+    const next = xpForLevel(catLevel + 1);
+    const pct = Math.min(100, ((catXp - base) / (next - base)) * 100);
+
+    const row = document.createElement("div");
+    row.className = "stat-row";
+    row.innerHTML = `
+      <div class="stat-name">${CATS[key]}<span class="stat-level">Level ${catLevel}</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+      <div class="stat-xp">${catXp} XP</div>
+    `;
+    rowsEl.appendChild(row);
+  });
+
+  document.getElementById("currentStreak").textContent = state.currentStreak;
+  document.getElementById("bestStreak").textContent = state.bestStreak;
+  document.getElementById("totalEntries").textContent = state.log.length;
+
+  const mutLevel = levelFromXp(state.mutXp);
+  document.getElementById("mutXpNum").textContent = state.mutXp + " Mut-Punkte";
+  document.getElementById("mutLevelNum").textContent = "Level " + mutLevel;
+
+  const streakMsgEl = document.getElementById("streakMsg");
+  if(state.log.length === 0){
+    streakMsgEl.textContent = "Trag deinen ersten Fortschritt ein.";
+  } else if(state.lastEntryDate && daysBetween(state.lastEntryDate, new Date()) >= 2){
+    streakMsgEl.textContent = "Ein paar Tage Pause – kein Drama. Heute zählt, nicht die Lücke.";
+  } else {
+    streakMsgEl.textContent = "Dranbleiben zählt mehr als Tempo. Weiter so.";
+  }
+
+  const questListEl = document.getElementById("questList");
+  questListEl.innerHTML = "";
+  Object.keys(CATS).forEach(cat => {
+    const quest = getTodaysQuest(cat, todayStr);
+    const isDone = !!state.dailyQuests.completed[cat];
+    const card = document.createElement("div");
+    card.className = "quest-card" + (quest.comfort ? " comfort" : "") + (isDone ? " done" : "");
+    card.innerHTML = `
+      <div class="quest-info">
+        <div class="quest-cat">${CATS[cat]}${quest.comfort ? ' · 🔥 Komfortzone' : ''}</div>
+        <div class="quest-text">${escapeHtml(quest.text)}</div>
+        <div class="quest-xp">+${quest.xp} XP${quest.comfort ? ' (2× durch Komfortzone) + Mut-Punkte' : ''}</div>
+      </div>
+      <button class="quest-done-btn" data-cat="${cat}" ${isDone ? "disabled" : ""}>${isDone ? "✓ Erledigt" : "Erledigt"}</button>
+    `;
+    questListEl.appendChild(card);
+  });
+  questListEl.querySelectorAll(".quest-done-btn:not(:disabled)").forEach(btn => {
+    btn.addEventListener("click", () => completeQuest(btn.dataset.cat));
+  });
+
+  const logEl = document.getElementById("logList");
+  logEl.innerHTML = "";
+  if(state.log.length === 0){
+    logEl.innerHTML = '<li class="empty">Noch keine Einträge.</li>';
+  } else {
+    state.log.slice().reverse().slice(0, 25).forEach(entry => {
+      const li = document.createElement("li");
+      li.innerHTML = `
+        <div>
+          <div class="log-cat">${CATS[entry.cat]} · ${entry.date} ${entry.comfort ? '<span class="log-comfort-tag">🔥 Komfortzone</span>' : ''}</div>
+          ${entry.note ? '<div class="log-note">' + escapeHtml(entry.note) + '</div>' : ''}
+        </div>
+        <div class="log-xp">+${entry.xp} XP</div>
+      `;
+      logEl.appendChild(li);
+    });
+  }
+}
+
+function escapeHtml(str){
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function showToast(msg){
+  const toast = document.getElementById("toast");
+  toast.textContent = msg;
+  toast.classList.add("show");
+  setTimeout(() => toast.classList.remove("show"), 2200);
+}
+
+function updateStreak(){
+  const today = dateOnly(new Date());
+  if(!state.lastEntryDate){
+    state.currentStreak = 1;
+  } else {
+    const gap = daysBetween(state.lastEntryDate, new Date());
+    if(gap === 0){
+      // same day, streak unchanged
+    } else if(gap === 1){
+      state.currentStreak += 1;
+    } else {
+      state.currentStreak = 1;
+    }
+  }
+  if(state.currentStreak > state.bestStreak){
+    state.bestStreak = state.currentStreak;
+  }
+  state.lastEntryDate = new Date().toISOString();
+}
+
+document.querySelectorAll(".xp-choice").forEach(el => {
+  el.addEventListener("click", () => {
+    document.querySelectorAll(".xp-choice").forEach(x => x.classList.remove("selected"));
+    el.classList.add("selected");
+    selectedXp = parseInt(el.dataset.xp, 10);
+    document.getElementById("submitBtn").disabled = false;
+  });
+});
+
+document.getElementById("comfortToggle").addEventListener("click", (e) => {
+  if(e.target.id !== "comfortCheckbox"){
+    document.getElementById("comfortCheckbox").checked = !document.getElementById("comfortCheckbox").checked;
+  }
+  document.getElementById("comfortToggle").classList.toggle("active", document.getElementById("comfortCheckbox").checked);
+});
+
+function completeQuest(cat){
+  const todayStr = dateOnly(new Date());
+  if(state.dailyQuests.completed[cat]) return;
+  const quest = getTodaysQuest(cat, todayStr);
+  const awardedXp = quest.comfort ? quest.xp * 2 : quest.xp;
+
+  state.categories[cat].xp += awardedXp;
+  if(quest.comfort){
+    state.mutXp += quest.xp;
+  }
+  state.dailyQuests.completed[cat] = true;
+  state.log.push({
+    cat: cat,
+    xp: awardedXp,
+    note: quest.text,
+    comfort: quest.comfort,
+    date: todayStr
+  });
+  updateStreak();
+
+  render();
+  saveState();
+  showToast(quest.comfort ? "🔥 +" + awardedXp + " XP + Mut-Punkte verbucht" : "+" + awardedXp + " XP verbucht");
+}
+
+document.getElementById("submitBtn").addEventListener("click", async () => {
+  if(!selectedXp) return;
+  const cat = document.getElementById("catSelect").value;
+  const note = document.getElementById("noteInput").value.trim();
+  const isComfort = document.getElementById("comfortCheckbox").checked;
+  const awardedXp = isComfort ? selectedXp * 2 : selectedXp;
+
+  state.categories[cat].xp += awardedXp;
+  if(isComfort){
+    state.mutXp += selectedXp;
+  }
+  state.log.push({
+    cat: cat,
+    xp: awardedXp,
+    note: note,
+    comfort: isComfort,
+    date: dateOnly(new Date())
+  });
+  updateStreak();
+
+  document.getElementById("noteInput").value = "";
+  document.querySelectorAll(".xp-choice").forEach(x => x.classList.remove("selected"));
+  document.getElementById("comfortCheckbox").checked = false;
+  document.getElementById("comfortToggle").classList.remove("active");
+  selectedXp = null;
+  document.getElementById("submitBtn").disabled = true;
+
+  render();
+  await saveState();
+  showToast(isComfort ? "🔥 +" + awardedXp + " XP + Mut-Punkte verbucht" : "+" + awardedXp + " XP verbucht");
+});
+
+loadState();
+</script>
+</body>
+</html>
